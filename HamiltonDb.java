@@ -9,7 +9,7 @@
 // can just be sent to it by a browser.  This would also show that I can do this further step
 
 
-// Hmm, in the pyton iris program, it looks like there is an array set up, each member of which is itself
+// Hmm, in the python iris program, it looks like there is an array set up, each member of which is itself
 // an array of 4 members.  And there is some sort of category to it.  Each of the four members of the subarray
 // is an attribute of the flower, and labelled as such somehow.  So... should I create some sort of Hamilton object
 // that has my 7 members, organized by attribute?
@@ -35,10 +35,97 @@ import javax.swing.JOptionPane;
 
 
 public class HamiltonDb {
-	
 	// set number of milliseconds for time delay used by method rollPrint()
 	static int fast = 2;
 	static int slow = 10;
+
+	// Instance variables
+	private int id;
+	private String title;
+	private String author;
+	private int pubDate;
+	private int qty;
+	private String info;
+	private String review;
+	
+	// CONSTRUCTOR
+	public HamiltonDb() {		// no variables within parentheses...yet
+		this.id = id;
+		this.title = title;
+		this.author = author;
+		this.pubDate = pubDate;
+		this.qty = qty;
+		this.info = info;
+		this.review = review;
+	}
+	
+	//  FOURTEEN(14) GETTER/SETTERS
+	public int getId() {
+		return id; 	
+	}
+	
+	public void setId(int id) {
+		this.id = id;
+	}
+	
+	public String getTitle() {
+		return title;
+	}
+	
+	public void setTitle(String title) {
+		this.title = title;
+	}
+	
+	public String getAuthor() {
+		return author;
+	}
+	
+	public void setAuthor(String author) {
+		this.author = author;
+	}
+	
+	public int getPubDate() {
+		return pubDate;
+	}
+	
+	public void setPubDate(int pudDate) {
+		this.pubDate = pubDate;
+	}
+	
+	public int getQty() {
+		return qty;
+	}
+	
+	public void setQty(int qty) {
+		this.qty = qty;
+	}
+	
+	public String getInfo() {
+		return info;
+	}
+	
+	public void setInfo(String info) {
+		info = info;
+	}
+	
+	public String getReview() {
+		return review;
+	}
+	
+	public void setReview() {
+		this.review = review;
+	}
+	
+
+	// used by rollPrint() to determine speed of rolling
+	// also used to create momentary pauses (i.e. half a second) to improve UI
+	public static void waitForIt(int millisec) {
+		try {
+			Thread.sleep(millisec);
+		}  catch (InterruptedException ie) {
+			ie.printStackTrace();
+		}
+	}
 	
 	// Printed output appears character-by-character (quickly), in a rolling fashion.
 	// This is done to improve the user's experience when going back and forth between console and 
@@ -51,16 +138,7 @@ public class HamiltonDb {
 			//fast += 2;	 // there is potential here for having fun with varying speeds, possibly under user control. 
 		}
 	}
-	
-	// used by rollPrint() to determine speed of rolling
-	// also used to create momentary pauses (i.e. half a second) to improve UI
-	public static void waitForIt(int millisec) {
-		try {
-			Thread.sleep(millisec);
-		}  catch (InterruptedException ie) {
-			ie.printStackTrace();
-		}
-	}
+
 	
 	// called by ensureDigit()
 	// takes String as arg, returns boolean:  Does the string have only digits?
@@ -95,26 +173,15 @@ public class HamiltonDb {
 	// called by methods to check whether a requested item in the database is ACTUALLY in the database.  
 	// If not, returns false.  (This method can print message to user, but does not take input)
 	// -- column var can refer to either title or author --
-	public static boolean checkMembership(String column, String userEntry) {
+	public static boolean checkMembership(String column, String userEntry, Statement stmt) throws SQLException {
 		boolean isMember = false;
-		
-		try (
-				// Allocate a database 'Connection' object, to communicate with database called ebookstore
-				Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/ebookstore?useSSL=false", "myuser", "caryrd");
-				// Allocate a 'Statement' object in the Connection
-				Statement stmt = conn.createStatement();
-		)	{
-			ResultSet rset = stmt.executeQuery("SELECT " + column + " FROM books");	// SQL query statement
-			while (rset.next()) {	// check each name (name of title, or of author) against userEntry
-				String name = rset.getString(column);
-				if (userEntry.equalsIgnoreCase(name)) {
-					isMember = true;	// method will return true only if userEntry finds a match in database
-				}
+		ResultSet rset = stmt.executeQuery("SELECT " + column + " FROM books");	// SQL query statement
+		while (rset.next()) {	// check each name (name of title, or of author) against userEntry
+			String name = rset.getString(column);
+			if (userEntry.equalsIgnoreCase(name)) {
+				isMember = true;	// method will return true only if userEntry finds a match in database
 			}
-		}  catch(SQLException ex) {
-			ex.printStackTrace();
-		}		// Close the resources - Done automatically by try-with-resources	
-			
+		}
 		if (isMember == false) {
 			rollPrint(" --Sorry, the database does not contain that item. Please try again--\n\n", fast);
 		}
@@ -124,33 +191,23 @@ public class HamiltonDb {
 	
 	// user choice 2. The simplest of the 5 methods called by choose()
 	// The method does not take input from user, just prints out list of book titles. 
-	public static void viewAll() {
+	public static void viewAll(Statement stmt) throws SQLException {
 		System.out.println("\t\t-- VIEW ALL TITLES -- ");
-
-		//parentheses after try:  The try-with-resources construct
-		try (
-				// Allocate a database 'Connection' object, to communicate with database called ebookstore
-				Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/ebookstore?useSSL=false", "myuser", "caryrd");
-				// Allocate a 'Statement' object in the Connection
-				Statement stmt = conn.createStatement();
-		)	{
-			rollPrint("Here is a list of all books in the database: ", fast);
-			ResultSet rset = stmt.executeQuery("SELECT title FROM books");	// SQL query statement
-			while (rset.next()) {
-				String title = rset.getString("title");
-				rollPrint("\n\t" + title, fast);
-			}
-			System.out.println();
-
-		}  catch(SQLException ex) {
-			ex.printStackTrace();
-		}		// Close the resources - Done automatically by try-with-resources
+		
+		// former location of try-catch block
+		rollPrint("Here is a list of all books in the database: ", fast);
+		ResultSet rset = stmt.executeQuery("SELECT title FROM books");	// SQL query statement
+		while (rset.next()) {
+			String title = rset.getString("title");
+			rollPrint("\n\t" + title, fast);
+		}
+		System.out.println();
 	}
 	
 	
 	// search() is user choice 1.  search() and delete() are sister methods.
 	// Each has two(2) ways to handle problems:  (1) calls checkMembership(), (2) Return to caller if user types empty string ("").
-	public static void search() {
+	public static void search(Statement stmt) throws SQLException {
 		System.out.println("\t\t-- SELECT BOOK -- ");
 		waitForIt(750);
 		
@@ -190,43 +247,33 @@ public class HamiltonDb {
 			
 			if (toSearch.equals("")) {return; }	// if user hits <ENTER>, return to choose()
 			
-			isMember = checkMembership(column, toSearch);  // call checkMembership() to see if requested book (or author) is in Db.			
+			isMember = checkMembership(column, toSearch, stmt);  // call checkMembership() to see if requested book (or author) is in Db.			
 		}
 		
 		
 		// STEP 3.  JDBC sends an SQL query, user is notified of results
-		//parentheses after try:  The try-with-resources construct
-		try (
-				// Allocate a database 'Connection' object, to communicate with database called ebookstore
-				Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/ebookstore?useSSL=false", "myuser", "caryrd");
-				// Allocate a 'Statement' object in the Connection
-				Statement stmt = conn.createStatement();
-		)	{
-			// SQL query.    .replace used in case user input contains single quote '
-			ResultSet rset = stmt.executeQuery("SELECT * FROM books WHERE " + column + " = '" + toSearch.replace("'", "''") + "' " );
-			rset.next();
-			// generate string
-			String record = "\tID #: " + rset.getInt("id")
-				+ "\n\tTitle: " + rset.getString("title") 
-				+ "\n\tAuthor: " + rset.getString("author") 
-				+ "\n\tPublication Date: " + rset.getInt("pubDate") 
-				+ "\n\tQuantity in Stock: " + rset.getInt("qty") 
-				+ "\n\tDescription: " + rset.getString("info") 
-				+ "\n\tWebsite Book Review: " + rset.getString("review");
+		
+		// SQL query.    .replace used in case user input contains single quote '
+		ResultSet rset = stmt.executeQuery("SELECT * FROM books WHERE " + column + " = '" + toSearch.replace("'", "''") + "' " );
+		rset.next();
+		// generate string
+		String record = "\tID #: " + rset.getInt("id")
+			+ "\n\tTitle: " + rset.getString("title") 
+			+ "\n\tAuthor: " + rset.getString("author") 
+			+ "\n\tPublication Date: " + rset.getInt("pubDate") 
+			+ "\n\tQuantity in Stock: " + rset.getInt("qty") 
+			+ "\n\tDescription: " + rset.getString("info") 
+			+ "\n\tWebsite Book Review: " + rset.getString("review");
 			
-			// print message to user
-			rollPrint(" --The requested record is: \n" + record, fast);
-			System.out.println();
-			
-		}  catch(SQLException ex) {
-			ex.printStackTrace();
-		}		// Close the resources - Done automatically by try-with-resources
+		// print message to user
+		rollPrint(" --The requested record is: \n" + record, fast);
+		System.out.println();	
 	}
 	
 	
 	// delete() is user choice 5.  delete() and search() are sister methods.
 	// Each has two(2) ways to handle problems: (1) calls checkMembership(),  (2) Return to caller if user types empty string ("").
-	public static void delete() {
+	public static void delete(Statement stmt) throws SQLException {
 		System.out.println("\t\t-- DELETE BOOK -- ");
 
 		// STEP 1.  Get user choice of title to delete, call checkMembership() to verify book in Db, loop till get good choice.
@@ -240,27 +287,16 @@ public class HamiltonDb {
 				
 			if (toTrash.equals("")) {return; }	// if user hits <ENTER>, return to choose() 
 
-			isMember = checkMembership("title", toTrash);	// call checkMembership method to see if requested book is in Db
+			isMember = checkMembership("title", toTrash, stmt);	// call checkMembership method to see if requested book is in Db
 		}
 		
 		
 		// STEP 2.  JDBC sends an SQL query, user is notified of results
-		// parentheses after try:  The try-with-resources construct
-		try (
-			// Allocate a database 'Connection' object, to communicate with database called ebookstore
-			Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/ebookstore?useSSL=false", "myuser", "caryrd");
-			// Allocate a 'Statement' object in the Connection
-			Statement stmt = conn.createStatement();
-		)	{
-			// SQL query.   .replace used in case user input includes single quote '
-			stmt.executeUpdate("DELETE FROM books WHERE title = '" + toTrash.replace("'", "''") + "'");
-			waitForIt(1000);
-			rollPrint(" --The requested record has been deleted.", fast);
-			System.out.println();
-			
-		}  catch(SQLException ex) {
-			ex.printStackTrace();
-		}		// Close the resources - Done automatically by try-with-resources
+		// SQL query.   .replace used in case user input includes single quote '
+		stmt.executeUpdate("DELETE FROM books WHERE title = '" + toTrash.replace("'", "''") + "'");
+		waitForIt(1000);
+		rollPrint(" --The requested record has been deleted.", fast);
+		System.out.println();
 	}
 	
 	
@@ -268,7 +304,7 @@ public class HamiltonDb {
 	// Each has two(2) ways to handle problems: (1) calls ensureDigit(),   (2) Return to caller if user types empty string ("")
 	// AND, update() has a third(3) way to handle problems:  (3) calls checkMembership()
 	// 			-- THIS METHOD IS TOO BIG, TOO FULL, NEEDS TO BE BROKEN UP !! --
-	public static void update() {
+	public static void update(Statement stmt) throws SQLException {
 		System.out.println("\t\t-- UPDATE -- ");
 
 		// STEP 1.  Get user choice of title to update, call checkMembership() to verify book in Db, loop till get good choice.
@@ -282,7 +318,7 @@ public class HamiltonDb {
 			
 			if (toUpdate.equals("")) {return; }	// if user hits <ENTER>, return to choose() 
 
-			isMember = checkMembership("title", toUpdate);  // call checkMembership() to see if requested book (or author) is in Db.			
+			isMember = checkMembership("title", toUpdate, stmt);  // call checkMembership() to see if requested book (or author) is in Db.			
 		}
 		
 		
@@ -313,59 +349,48 @@ public class HamiltonDb {
 		
 		
 		// STEP 3.  JDBC sends an SQL query, user prompted if corrections are necessary, user is notified of results
-		//parentheses after try:  The try-with-resources construct
-		try (
-				// Allocate a database 'Connection' object, to communicate with database called ebookstore
-				Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/ebookstore?useSSL=false", "myuser", "caryrd");
-				// Allocate a 'Statement' object in the Connection
-				Statement stmt = conn.createStatement();
-		)	{
-			ResultSet rset = stmt.executeQuery("SELECT " + column + " FROM books WHERE title = '" + toUpdate + "' ");
-			rset.next();
+		ResultSet rset = stmt.executeQuery("SELECT " + column + " FROM books WHERE title = '" + toUpdate + "' ");
+		rset.next();
 			
-			// handle the case where user wants to update QUANTITY
-			if (fieldNum == 1) {
-				int oldFieldInt = rset.getInt(column);
-				rollPrint("Current quantity: " + oldFieldInt + "\n", fast); // print existing field to user
+		// handle the case where user wants to update QUANTITY
+		if (fieldNum == 1) {
+			int oldFieldInt = rset.getInt(column);
+			rollPrint("Current quantity: " + oldFieldInt + "\n", fast); // print existing field to user
 				
-				// get new value from user for quantity
-				int newFieldInt = -7; 	// initialize quantity to invalid number, so while-loop has at least one iteration.
-				String newFieldString = "";
-				while (newFieldInt < 0) {
-					rollPrint("Enter the new quantity in stock for this book: ", fast);
-					Scanner scanObj = new Scanner(System.in);	// Scanner class only reads as String
-					newFieldString = scanObj.nextLine();
-					newFieldInt = ensureDigit(newFieldString);	// call ensureDigit() to ensure string is all digit
-				}
-				// issue SQL update:    .replace used in case user input includes single quote '
-				stmt.executeUpdate("UPDATE books SET " + column + " = '" + newFieldInt + "' WHERE title = '" + toUpdate.replace("'", "''") + "' ");
+			// get new value from user for quantity
+			int newFieldInt = -7; 	// initialize quantity to invalid number, so while-loop has at least one iteration.
+			String newFieldString = "";
+			while (newFieldInt < 0) {
+				rollPrint("Enter the new quantity in stock for this book: ", fast);
+				Scanner scanObj = new Scanner(System.in);	// Scanner class only reads as String
+				newFieldString = scanObj.nextLine();
+				newFieldInt = ensureDigit(newFieldString);	// call ensureDigit() to ensure string is all digit
 			}
+			// issue SQL update:    .replace used in case user input includes single quote '
+			stmt.executeUpdate("UPDATE books SET " + column + " = '" + newFieldInt + "' WHERE title = '" + toUpdate.replace("'", "''") + "' ");
+		}
 			
-			// handle the case where user wants to update DESCRIPTION or WEBSITE
-			else if (fieldNum == 2 || fieldNum == 3) {
-				String oldFieldStr = rset.getString(column);
-				rollPrint("Current field: " + oldFieldStr + "\n", fast);	// print exiting field to user
+		// handle the case where user wants to update DESCRIPTION or WEBSITE
+		else if (fieldNum == 2 || fieldNum == 3) {
+			String oldFieldStr = rset.getString(column);
+			rollPrint("Current field: " + oldFieldStr + "\n", fast);	// print exiting field to user
 				
-				// get new value from user for description or website
-				rollPrint("Enter the new text for this field: ", fast);	// address 255 (?) char. limit at a later date
-				Scanner scanObjText = new Scanner(System.in);
-				String newFieldStr = scanObjText.nextLine();
-				// issue SQL update.  use .replace  in case user entry contains single quote '
-				stmt.executeUpdate("UPDATE books SET " + column + " = '" + newFieldStr.replace("'", "''") + "' WHERE title = '" + toUpdate.replace("'", "''") + "' ");
-			}
+			// get new value from user for description or website
+			rollPrint("Enter the new text for this field: ", fast);	// address 255 (?) char. limit at a later date
+			Scanner scanObjText = new Scanner(System.in);
+			String newFieldStr = scanObjText.nextLine();
+			// issue SQL update.  use .replace  in case user entry contains single quote '
+			stmt.executeUpdate("UPDATE books SET " + column + " = '" + newFieldStr.replace("'", "''") + "' WHERE title = '" + toUpdate.replace("'", "''") + "' ");
+		}
 			
-			rollPrint(" --Thank you, the record has been updated.", fast);	// final confirmation message to user
-			System.out.println();	
-			
-		}  catch(SQLException ex) {
-			ex.printStackTrace();
-		}		// Close the resources - Done automatically by try-with-resources
+		rollPrint(" --Thank you, the record has been updated.", fast);	// final confirmation message to user
+		System.out.println();	
 	}
 	
 	
 	// insert() is user choice 4.  update() and insert() are sister methods.  They make ADDITIONS to the database
 	// Each has two(2) errors/checks/outlets: (1) calls ensureDigit(),   (2) Return to caller if user types empty string ("")
-	public static void insert() {
+	public static void insert(Statement stmt) throws SQLException {
 		System.out.println("\t\t-- INSERT BOOK INTO DATABASE -- ");
 
 		// For reasons I don't yet understand, when I use a single scanner object to scan an int then one or more Strings, 
@@ -408,33 +433,22 @@ public class HamiltonDb {
 		
 		// Could add a final message here, asking user to hit <ENTER> (or type "Y" or "yes") to confirm insert, otherwise printing
 		// a message that insert is aborted, and returning to caller
-		
-		//parentheses after try:  The try-with-resources construct
-		try (
-				// Allocate a database 'Connection' object, to communicate with database called ebookstore
-				Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/ebookstore?useSSL=false", "myuser", "caryrd");
-				// Allocate a 'Statement' object in the Connection
-				Statement stmt = conn.createStatement();
-		)	{
-			// get current highest book id, then add 1 to it to automatically generate an id for the book currently being inserted.
-			ResultSet rset = stmt.executeQuery("SELECT id FROM books ORDER BY id DESC");	// SQL query statement
-			rset.next();	// moves cursor from BEFORE the first row TO the first row, so now we're ready.
-			int highID = rset.getInt("id");
-			int newHigh = highID + 1;
+
+		// get current highest book id, then add 1 to it to automatically generate an id for the book currently being inserted.
+		ResultSet rset = stmt.executeQuery("SELECT id FROM books ORDER BY id DESC");	// SQL query statement
+		rset.next();	// moves cursor from BEFORE the first row TO the first row, so now we're ready.
+		int highID = rset.getInt("id");
+		int newHigh = highID + 1;
 						
-			// INSERT a record with SQL query.    .replace used in case user input includes single quote '
-			String hamString = "INSERT INTO books VALUES "
-					+ "(" + newHigh + ", " + "'" + title.replace("'", "''") + "', '" + author.replace("'", "''") + "', " + 
-					pubDate + ", " + qty + ", '" + info.replace("'", "''") + "', '" + review.replace("'", "''") + "')";
-			int countInserted = stmt.executeUpdate(hamString); // don't really need "countInserted" var...
+		// INSERT a record with SQL query.    .replace used in case user input includes single quote '
+		String hamString = "INSERT INTO books VALUES "
+				+ "(" + newHigh + ", " + "'" + title.replace("'", "''") + "', '" + author.replace("'", "''") + "', " + 
+				pubDate + ", " + qty + ", '" + info.replace("'", "''") + "', '" + review.replace("'", "''") + "')";
+		int countInserted = stmt.executeUpdate(hamString); // don't really need "countInserted" var...
 			
-			waitForIt(1000);
-			rollPrint(" --Your book has been added to the database", fast);//is it bad to say this without programmatic confirmation?
-			System.out.println();
-			
-		}  catch(SQLException ex) {
-			ex.printStackTrace();
-		}		// Close the resources - Done automatically by try-with-resources
+		waitForIt(1000);
+		rollPrint(" --Your book has been added to the database", fast);//is it bad to say this without programmatic confirmation?
+		System.out.println();
 	}
 
 	
@@ -460,15 +474,27 @@ public class HamiltonDb {
 		
 		// Should probably surround the following switch block with the try-catch, and just have that in this ONE place.
 		// if an exception is thrown, the program returns to main which causes choose() to be called again.
-		switch (userNum) {
-			case 1: search();	break;
-			case 2: viewAll(); break; 
-			case 3: update();	break;
-			case 4: insert();	break;
-			case 5: delete();	break;
+		
+		//parentheses after try:  The try-with-resources construct
+		try (
+				// Allocate a database 'Connection' object, to communicate with database called ebookstore
+				Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/ebookstore?useSSL=false", "myuser", "caryrd");
+				// Allocate a 'Statement' object in the Connection
+				Statement stmt = conn.createStatement();
+		)	{
+			switch (userNum) {
+				case 1: search(stmt);	break;
+				case 2: viewAll(stmt); 	break; 
+				case 3: update(stmt);	break;
+				case 4: insert(stmt);	break;
+				case 5: delete(stmt);	break;
 			
-			case 0: break;	// user chooses "0" (above) --> return 0 to caller, causing program to exit
-		}
+				case 0: break;	// user chooses "0" (above) --> return 0 to caller, causing program to exit
+			}
+		}  catch(SQLException ex) {
+			ex.printStackTrace();
+		}		// Close the resources - Done automatically by try-with-resources
+		
 		return userNum;
 	}
 	
