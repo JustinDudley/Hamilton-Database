@@ -33,11 +33,13 @@ public class HamDb_Create {
 		)	{
 			
 			// Need to issue warning:  Continuing will erase the former table "books"
-			// JD  Should create a back-up table with slightly diff. name
 			int countRows = stmt.executeUpdate("truncate table books");		// I *think*  this statement is working properly!!
 			System.out.println(countRows + " records changed by truncating.\n");
 			
 			// single quote seems to be the ONLY danger, re SQL statements.  See 6th record below
+			// WHEN TYPING IN BOOKS TO THE STRING BELOW:  USE  '' WHEREVER A BOOK TITLE, DESCRIPTION, ETC. HAS A ' 
+			// WHEN TYPING IN BOOKS TO THE STRING BELOW:  USE  '' WHEREVER A BOOK TITLE, DESCRIPTION, ETC. HAS A ' 
+			// WHEN TYPING IN BOOKS TO THE STRING BELOW:  USE  '' WHEREVER A BOOK TITLE, DESCRIPTION, ETC. HAS A ' 
 			String sqlInsert = "insert into books values "
 					+ "(1001, 'Alexander Hamilton', 'Chernow, Ron', 2005, 33, 'the Bestseller that inspired Lin-Manuel Miranda to write the hip-hop-infused musical', 'https://www.goodreads.com/book/show/16130.Alexander_Hamilton'), "
 					+ "(1002, 'The Hamilton Papers: Historic Documents Referenced in the Broadway Musical (Volume 1)', 'Hamilton, Alexander', 2016, 12, 'a complete resource for the historic documents from the hit Broadway musical, 430 pages.', 'https://www.amazon.com/Hamilton-Papers-Historic-Documents-Referenced/dp/1982032820'), "
