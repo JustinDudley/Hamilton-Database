@@ -64,7 +64,7 @@ public class HamiltonDb {
 	}
 	
 	
-	//  SIXTEEN(16+) GETTER/SETTERS
+	//  EIGHTEEN(18) GETTER/SETTERS
 	public int getId() {
 		return id; 	
 	}
@@ -178,6 +178,7 @@ public class HamiltonDb {
 		return isAllDigit;
 	}
 	
+	
 	// takes user string, calls checkDigit() to check if each char is a digit. If all digit, ensurePosDigit's 
 	// loop is skipped, string is cast to int and returned. If NOT all digit, a new string is demanded until 
 	// user gives one that IS all int, and then that string is converted to int type, and returned to caller.
@@ -205,23 +206,6 @@ public class HamiltonDb {
 		}
 		System.out.println();
 	}
-	
-	/*
-	// SOON TO BE OBSOLETE.  STILL USED BY 2 METHODS, FOR NOW
-	public static boolean checkMembership(String column, String userEntry, Statement stmt) throws SQLException {
-		boolean inDb = false;
-		ResultSet rset = stmt.executeQuery("SELECT " + column + " FROM books");	// SQL query statement
-		while (rset.next()) {	// check each name (name of title, or of author) against userEntry
-			String name = rset.getString(column);
-			if (userEntry.equalsIgnoreCase(name)) {
-				inDb = true;	// method will return true only if userEntry finds a match in database
-			}
-		}
-		if (inDb == false) {
-			rollPrint(" --Sorry, the database does not contain that item. Please try again--\n\n", fast);
-		}
-		return inDb;
-	} */
 	
 	
 	// Check Db for a match with user's input, then loads one record from database TO a HamiltonDb Object.
@@ -275,15 +259,16 @@ public class HamiltonDb {
 		waitForIt(750);
 		
 		// STEP 1.  Ask user which column (author or title) they wish to search
-		String userColumn = "badInput";	// initialize userColumn to an unacceptable value, to let while-loop begin.
-		// check: string longer than one character?  ASCII value of 1st character is out of range for the 2 allowable choice digits?
-		while (userColumn.length() != 1  ||  userColumn.charAt(0) - 48 < 1  || userColumn.charAt(0) - 48 > 2) {
+		String userColumn;
+		do {
 			userColumn = JOptionPane.showInputDialog("Do you want to search by "
 					+ "author or title? \nEnter 1 or 2 \n\n1. author \n2. title ");
 			if (userColumn == null) {	 // click "cancel" --> JOptionPane sets userColumn to null --> return, to choose().
 				return;
 			}
-		}
+		// string length should only be 1 char, ASCII value of 1st char must be in given range of 2 digits.		
+		} while (userColumn.length() != 1 || userColumn.charAt(0) - 48 < 1 || userColumn.charAt(0) - 48 > 2);
+		
 		
 		// STEP 2. Get user search choice, then call checkAndRetrieve() to verify book in Db  
 		boolean inDb = false;
@@ -303,7 +288,8 @@ public class HamiltonDb {
 				return;
 			}	
 			
-			inDb = checkAndRetrieve(stmt);	// call method to see if requested book is in Db
+			// call method, see if req'd book is in Db; retrieve record, load into HamiltonDb object.
+			inDb = checkAndRetrieve(stmt);
 		}
 
 		// STEP 3. Print message to user
@@ -330,7 +316,8 @@ public class HamiltonDb {
 				return; 	
 			}	
 			
-			inDb = checkAndRetrieve(stmt);	// call method to see if requested book is in Db
+			// call method, see if req'd book is in Db; (retrieve record, load into Ham object - overkill)
+			inDb = checkAndRetrieve(stmt);	
 		}
 		
 		// STEP 2.  JDBC sends an SQL query, user is notified of results
@@ -355,7 +342,6 @@ public class HamiltonDb {
 	}
 	
 	
-	
 	// update() is user choice 3.  update() and addNew() are sister methods. They make ADDITIONS to the Db.
 	public void update(Statement stmt) throws SQLException {
 		System.out.println("\t\t-- UPDATE -- ");
@@ -373,21 +359,23 @@ public class HamiltonDb {
 				return; 	
 			}	
 			
-			inDb = checkAndRetrieve(stmt); // call method, see if req'd book is in Db; retrieve record, load into HamiltonDb object.
+			// call method, see if req'd book is in Db; retrieve record, load into HamiltonDb object.
+			inDb = checkAndRetrieve(stmt);
 		}
 
 		
 		// STEP 2.  Ask user which column (qty, info, or website) they wish to update
-		String userColumn = "badInput";	// initialize fieldString to an unacceptable value, to make while-loop begin.	
-		// check: string longer than one character?  ASCII value of 1st character is out of range for the 3 allowable choice digits?
-		while (userColumn.length() != 1  ||  userColumn.charAt(0) - 48 < 1  || userColumn.charAt(0) - 48 > 3) {
-			userColumn = JOptionPane.showInputDialog("Do you want to change the QUANTITY, DESCRIPTION, or the WEBSITE BOOK REVIEW?"
+		String userColumn;
+		do {
+			userColumn = JOptionPane.showInputDialog("Do you want to change the QUANTITY, DESCRIPTION, or "
+					+ "the WEBSITE BOOK REVIEW?"
 					+ "\nNote: This change will be *PERMANENT* "
-					+ "\nEnter 1, 2, or 3 \n\n1. QUANTITY \n2. DESCRIPTION \n3. WEBSITE BOOK REVIEW");
+					+ "\nEnter 1, 2, or 3 \n\n1. QUANTITY \n2. DESCRIPTION \n3. WEBSITE BOOK REVIEW");	
 			if (userColumn == null) {	// click "cancel" --> JOptionPane sets userColumn to null --> return, to choose().
 				return; 
-			} 
-		}
+			}
+		// string length should only be 1 char, ASCII value of 1st char must be in given range of 3 digits.	
+		} while (userColumn.length() != 1 || userColumn.charAt(0) - 48 < 1 || userColumn.charAt(0) - 48 > 3);
 		
 		
 		// STEP 3: load user entry into the HamiltonDb object alex
@@ -486,95 +474,25 @@ public class HamiltonDb {
 	}
 
 	
-		
-		/*
-	// addNew() is user choice 4.  update() and addNew() are sister methods.  They make ADDITIONS to the database
-	// Each has two(2) errors/checks/outlets: (1) calls ensurePosDigit(),   (2) Return to caller if user types empty string ("")
-	public void addNewOBSOLETE(Statement stmt) throws SQLException {
-		System.out.println("\t\t-- ADD NEW BOOK TO DATABASE -- ");
-
-		// For reasons I don't yet understand, when I use a single scanner object to scan an int then one or more Strings, 
-		// the FIRST String (and only the first) does not get scanned.  It gets skipped over, as if it took one failed String scan
-		// to reset the scanner object, and then the scanner object IS ready for the next String scan.
-		// 		SO:  I am using 2 different scanner objects as a work-around (one for ints, one for Strings)
-		//		WAIT, NEVER MIND: i've decided ONLY to scan for strings, and convert the necessary strings to int afterward !
-
-		Scanner strScan = new Scanner(System.in);
-		
-		rollPrint("You will be prompted to enter TITLE, AUTHOR, etc.  If you type <ENTER> in a non-number "
-				+ "\ncolumn such as TITLE, the database will record an empty space in that column. \n"
-				, fast);
-		waitForIt(1000);
-		System.out.print("TITLE: "); 
-		String title = strScan.nextLine();
-		System.out.print("AUTHOR (use format Lastname, Firstname): ");
-		String author = strScan.nextLine();
-		
-		int pubDate = 3001;	// initialize year to an invalid number, to let while-loop begin 
-		while (pubDate < 0  ||  pubDate > 3000) {	// user is given a generous 3000-year range for publication date (!)
-			System.out.print("YEAR OF PUBLICATION: "); 
-			String pubString = strScan.nextLine();
-			pubDate = ensurePosDigit(pubString);	// call ensurePosDigit(), which checks for all-digit, and prompts user for correction. 
-		}
-		
-		int qty = -7; 	// initialize quantity to an invalid number, to let while-loop begin 
-		while (qty < 0) {
-			System.out.print("QUANTITY (How many books are in stock?): ");
-			String qtyString = strScan.nextLine();
-			qty = ensurePosDigit(qtyString);	// call ensurePosDigit(), which checks for all-digit, and prompts user for correction.
-		}
-		
-		// how to cut off user at 255 characters?  need if stmt.  Solve at some future time
-		System.out.print("DESCRIPTION (Write a brief summary of the book): ");
-		String info = strScan.nextLine();
-		System.out.print("WEBSITE BOOK REVIEW (Please enter the URL of a website containing a review of this book, "
-				+ "\nor to leave this field blank press <ENTER>): ");
-		String review = strScan.nextLine();
-		
-		// Could add a final message here, asking user to hit <ENTER> (or type "Y" or "yes") to confirm insert, otherwise printing
-		// a message that insert is aborted, and returning to caller
-
-		// get current highest book id, then add 1 to it to automatically generate an id for the book currently being inserted.
-		ResultSet rset = stmt.executeQuery("SELECT id FROM books ORDER BY id DESC");	// SQL query statement
-		rset.next();	// moves cursor from BEFORE the first row TO the first row, so now we're ready.
-		int highID = rset.getInt("id");
-		int newHigh = highID + 1;
-						
-		// INSERT a record with SQL query.    .replace used in case user input includes single quote '
-		String hamString = "INSERT INTO books VALUES "
-				+ "(" + newHigh + ", " + "'" + title.replace("'", "''") + "', '" + author.replace("'", "''") + "', " + 
-				pubDate + ", " + qty + ", '" + info.replace("'", "''") + "', '" + review.replace("'", "''") + "')";
-		int countInserted = stmt.executeUpdate(hamString); // don't really need "countInserted" var...
-			
-		waitForIt(1000);
-		rollPrint(" --Your book has been added to the database", fast);//is it bad to say this without programmatic confirmation?
-		System.out.println();
-	} */
-
-	
-	public int choose() {
+	public String choose() {
 		System.out.println("  ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----\n");
 		rollPrint("    [] [] Please select an option from the dialogue box [] [] \n", fast);
-
-		String userString = "badInput";	// initialize userString to an invalid value, so while-loop begins. 
-		// check if string is longer than one character, and if  ASCII value of 1st character is out of 
-		// range for the 6 allowable choice digits.
-		// in future:  Just check if userString belongs to a given array.  Maybe call a static function that
-		// checks a local var or static var.  
-		//  - wish I could include "null" in the list of possibilities and do away with the awkwardness
-		while (userString.length() != 1  ||  userString.charAt(0) - 48 < 0  || userString.charAt(0) - 48 > 5) {
+		
+		
+		String userString;
+		do {
 			userString = JOptionPane.showInputDialog("What would you like to do? Please enter a number (1-5) below. \n Enter 0 to quit."
 					+ "\n 1   Search for a book, by title or author, and see its full database information"  
 					+ "\n 2   View a list of ALL books in the database"	// returns titles, not the whole table
 					+ "\n 3   Update the 'quantity', 'description' or 'reviews' column for an existing book"
 					+ "\n 4   Add a new book to the database"
 					+ "\n 5   Delete a book from the database"
-					+ "\n 0   Quit" );
+					+ "\n 0   Quit " );
 			if (userString == null) {	// user clicks "cancel" --> return 0 to caller --> program exits.
-				return 0; 
-			}	
-		}
-		int userNum = Integer.parseInt(userString);		
+				return "0"; 
+			}
+		// string length should only be 1 char, ASCII value of 1st char must be in given range of 6 digits.	
+		} while (userString.length() != 1 || userString.charAt(0) - 48 < 0 || userString.charAt(0) - 48 > 5);
 		
 		
 		//parentheses after try:  The try-with-resources construct
@@ -584,20 +502,20 @@ public class HamiltonDb {
 				// Allocate a 'Statement' object in the Connection
 				Statement stmt = conn.createStatement();
 		)	{
-			switch (userNum) {
-				case 1: search(stmt);	break;
-				case 2: viewAll(stmt); 	break; 
-				case 3: update(stmt);	break;
-				case 4: addNew(stmt);	break;
-				case 5: delete(stmt);	break;
+			switch (userString) {
+				case "1": search(stmt);	break;
+				case "2": viewAll(stmt); 	break; 
+				case "3": update(stmt);	break;
+				case "4": addNew(stmt);	break;
+				case "5": delete(stmt);	break;
 			
-				case 0: break;	// user chooses "0" (above) --> return 0 to caller --> program exits 
+				case "0": break;//(line not needed) user chooses "0" --> return 0 to caller--> program exits.
 			}
 		}  catch(SQLException ex) {
 			ex.printStackTrace();
 		}		// Close the resources - Done automatically by try-with-resources
 		
-		return userNum;
+		return userString;
 	}
 	
 	
@@ -615,10 +533,11 @@ public class HamiltonDb {
 		scanObj.nextLine();	// accepts user's <ENTER>, doesn't record anything in a var
 		
 		
-		int exitWithZero = 42;	// initialize to any non-zero value 
-		while (exitWithZero != 0) {
-			exitWithZero = alex.choose();	// call choose(), the gateway to all other methods
-		}		
+		String exitWithZero;
+		do {
+			exitWithZero = alex.choose(); 	// call choose(), the gateway to all other methods
+		} while ( ! exitWithZero.equals("0"));
+		
 		
 		// print goodbye message
 		rollPrint("\n\nWe hope you had a smooth experience using the Hamilton! database today. "
